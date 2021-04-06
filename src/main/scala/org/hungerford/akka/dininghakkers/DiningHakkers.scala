@@ -4,6 +4,15 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import org.hungerford.akka.dininghakkers.Chopstick.ChopstickAnswer
 
+import scala.concurrent.duration.FiniteDuration
+import scala.util.Random
+
+/**
+ * Adapted from the Akka example:
+ * https://developer.lightbend.com/start/?group=akka&project=akka-samples-fsm-scala
+ */
+
+
 object Chopstick {
     sealed trait ChopstickMessage
     final case class Take(ref: ActorRef[ChopstickAnswer]) extends ChopstickMessage
@@ -17,11 +26,23 @@ object Chopstick {
 }
 
 object Hakker {
-    sealed trait Command
+    trait Command
     case object Think extends Command
     case object Eat extends Command
     final case class HandleChopstickAnswer( msg: ChopstickAnswer )
       extends Command
+
+    private val r : Random = new scala.util.Random
+
+    def rndBool() : Boolean = r.nextBoolean()
+
+    def rndDuration( dur : FiniteDuration, plusOrMinus : FiniteDuration ) : FiniteDuration = {
+        val pmVal = r.nextLong( plusOrMinus._1 + 1 )
+        val pOrM = FiniteDuration( pmVal, plusOrMinus._2 )
+        val plus = r.nextBoolean()
+        if ( plus ) dur + pOrM
+        else dur - pOrM
+    }
 }
 
 object DiningHakkers {
@@ -72,7 +93,6 @@ trait DiningHakkers {
                 Behaviors.same
 
             case Start =>
-                context.log.info( "STARTING" )
                 if ( hakkerNames != Nil && hakkers == Nil ) {
                     initDiners()
                     hakkers.foreach( _ ! Eat )
@@ -81,15 +101,24 @@ trait DiningHakkers {
                 Behaviors.same
 
             case Stop =>
-                context.log.info( "STOPPING" )
                 stopDining()
                 Behaviors.same
 
             case Exit =>
-                context.log.info( "EXITING" )
                 stopDining()
                 Behaviors.stopped
         }
     }
 
+}
+
+object SingleDiningHakker {
+    import Chopstick._
+    import Hakker._
+
+    def apply( name : String ) : Behavior[ Command ] = Behaviors.setup( ctx => {
+        val chopstick1 = ctx.spawn( ChopstickNaive(), "chopstick-1" )
+        val chopstick2 = ctx.spawn( ChopstickNaive(), "chopstick-2" )
+        HakkerNaive( name, chopstick1, chopstick2 )
+    } )
 }
