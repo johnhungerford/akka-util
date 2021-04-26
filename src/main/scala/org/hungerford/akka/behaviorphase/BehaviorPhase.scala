@@ -88,14 +88,20 @@ trait BehaviorPhase[ MessageType, +T ] {
     }
 }
 
-trait PartialBehaviorPhase[ MessageType, +T ] extends BehaviorPhase[ MessageType, T ] {
+trait HandlerBehaviorPhase[ MessageType, +T ] extends BehaviorPhase[ MessageType, T ] {
 
     val partialHandler :  ActorContext[ MessageType ] => PartialFunction[ MessageType, BehaviorDecision[ T, Nothing ] ]
 
     override final def behavior( returnBehavior : T => Behavior[ MessageType ] )
                                ( implicit ctx : ActorContext[ MessageType ] ) : Behavior[ MessageType ] = {
         Behaviors.receiveMessage { msg : MessageType =>
-            partialHandler( ctx )( msg ) match {
+            val partialHandlerFn : PartialFunction[ MessageType, BehaviorDecision[ T, Nothing ] ] = {
+                partialHandler( ctx ) orElse ( {
+                    case _ => Stay
+                } )
+            }
+
+            partialHandlerFn( msg ) match {
                 case Stay => Behaviors.same
                 case StayWith( _ ) => Behaviors.same
                 case Return( value ) => returnBehavior( value )
@@ -104,7 +110,7 @@ trait PartialBehaviorPhase[ MessageType, +T ] extends BehaviorPhase[ MessageType
     }
 }
 
-trait StatefulPartialBehaviorPhase[ MessageType, +T, StateType ] extends BehaviorPhase[ MessageType, T ] {
+trait StatefulHandlerBehaviorPhase[ MessageType, +T, StateType ] extends BehaviorPhase[ MessageType, T ] {
 
     type HandlerType[ B ] = ActorContext[ MessageType ] => PartialFunction[ (MessageType, StateType), BehaviorDecision[ B, StateType ] ]
 
@@ -157,7 +163,7 @@ case class Skip[ MessageType, +T ]( returnVal : T ) extends BehaviorPhase[ Messa
 object BehaviorPhase extends {
 
     def fromHandler[ MessageType, T ]( handler : ActorContext[ MessageType ] => PartialFunction[ MessageType, BehaviorDecision[ T, Nothing ] ] ) : BehaviorPhase[ MessageType, T ] = {
-        new PartialBehaviorPhase[ MessageType, T ] {
+        new HandlerBehaviorPhase[ MessageType, T ] {
             override val partialHandler : ActorContext[ MessageType ] => PartialFunction[ MessageType, BehaviorDecision[ T, Nothing ] ] = {
                 handler
             }

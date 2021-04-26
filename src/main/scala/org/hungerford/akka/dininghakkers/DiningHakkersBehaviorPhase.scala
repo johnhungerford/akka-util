@@ -86,7 +86,7 @@ class HakkerBP( name: String,
             _ <- thinkFor( 5.seconds, plusOrMinus = 4.seconds )
         } yield res )
           .foldWhile( 0 )( ( i, res ) => if ( res ) 0 else i + 1 )( ( _, i : Int ) => i < 3 )
-          .onComplete( ( ctx, numTimes ) => ctx.log.info( s"AAAAUUUGH! $name failed to pick up his chopsticks $numTimes times in a row!!!" ) )
+          .onComplete( ( ctx, numTimes ) => ctx.log.info( s"$name curses its fate after failing to pick up chopsticks $numTimes times in a row!!!" ) )
           .loop
     } yield ()
 
