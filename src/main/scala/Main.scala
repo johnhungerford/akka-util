@@ -43,8 +43,8 @@ object Main {
 
     val NaiveCommand : Regex = """naive|na""".r
     val FsmCommand : Regex = """fsm|finitestate|finitestatemachine""".r
-    val BehaviorPhaseCommand : Regex = """bp|behaviorphase|beph""".r
-    val SubActorsCommand : Regex = """sub|subactors|subact""".r
+    val BehaviorPhaseCommand : Regex = """bp|behaviorphase|beph|behavior-phase""".r
+    val SubActorsCommand : Regex = """sub|subactors|subact|sub-actors|sub-act|sub-actor""".r
 
     val StartWithCommand : Regex = """start:\s*([a-z0-9\s]*)""".r
     val StartCommand : Regex = "start".r
