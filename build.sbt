@@ -13,4 +13,4 @@ resolvers ++= Seq(
 )
 
 lazy val root = ( project in file( "." ) )
-  .settings( libraryDependencies ++= akka ++ logging ++ scalaFp )
+  .settings( libraryDependencies ++= akka )
